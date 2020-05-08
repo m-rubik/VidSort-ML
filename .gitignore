@@ -1,0 +1,10 @@
+videos/*
+images/*
+objects/*
+models/*
+databases/*
+.vscode/*
+*/__pycache__/*
+*.pyc
+
+Pipfile.lock
