@@ -1,6 +1,8 @@
 import pickle
 import face_recognition
 from sklearn import svm
+from utilities.file_utilities import get_unique_filename
+import cv2
 import os
 
 def load_model(model_name):
@@ -88,8 +90,6 @@ def test_model(model_name, test_image_name):
     For each person that the model is trained for:
     1. Load a picture of that person
     2. Ensure that the model recognizes that person with a very high confidence
-    
-    TODO: ALL OF THIS
     """
 
     clf = load_model(model_name)
@@ -97,19 +97,46 @@ def test_model(model_name, test_image_name):
     # Load the test image with unknown faces into a numpy array
     test_image = face_recognition.load_image_file(test_image_name)
 
-    # Find all the faces in the test image using the default HOG-based model
+   # Find all the faces and face encodings in the current frame of video
     face_locations = face_recognition.face_locations(test_image)
-    no = len(face_locations)
-    print("Number of faces detected: ", no)
+    face_encodings = face_recognition.face_encodings(test_image, face_locations)
 
-    # Predict all the faces in the test image using the trained classifier
-    print("Found:")
-    for i in range(no):
-        test_image_enc = face_recognition.face_encodings(test_image)[i]
-        print(clf.predict_proba([test_image_enc]))
-        name = clf.predict([test_image_enc])
-        print(*name)
+    index = 0
+    for face_encoding in face_encodings:
+        prob = clf.predict_proba([face_encoding])[0]
+        # name = clf.predict([face_encoding])
+        prob_per_class_dictionary = dict(zip(clf.classes_, prob))
+        # print(prob_per_class_dictionary)
+        for face, probability in prob_per_class_dictionary.items():
+            if probability >= 0.7:
+                percentage = round(probability*100,2)
+                confidence = str(percentage)+"%"
+                print("Found", face, "with", confidence, "confidence")
+
+                face_location = face_locations[index]
+                top = face_location[0]
+                right = face_location[1]
+                bottom = face_location[2]
+                left = face_location[3]
+                
+                draw = True
+                if draw:
+                    # Draw a box around the face
+                    cv2.rectangle(test_image, (left, top), (right, bottom), (0, 0, 255), 2)
+
+                    # Draw a label with a name below the face
+                    cv2.rectangle(test_image, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+                    font = cv2.FONT_HERSHEY_DUPLEX
+                    cv2.putText(test_image, face+": "+confidence, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
+                # cropped_frame = test_image[top:bottom, left:right]
+                folder = "./images/"+face+"/"
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                file_name = get_unique_filename("./images/"+face+"/")
+                cv2.imwrite(folder+file_name+".jpg", cv2.cvtColor(test_image, cv2.COLOR_RGB2BGR))
+        index += 1
 
 if __name__ == "__main__":
-    train_model("top9")
-    # test_model("top9", "test_image.jpg")
+    # train_model("top10")
+    test_model("top9", "1.jpg")
