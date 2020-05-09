@@ -137,7 +137,8 @@ def search_and_download(search_term:str,driver_path:str,target_path='./images/tr
 if __name__ == "__main__":
     driver = webdriver.Chrome(ChromeDriverManager().install())
     # list_of_names = ["Dakota Johnson", "Jamie Dornan"]
-    list_of_names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
+    # list_of_names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
+    list_of_names = ["Ryan Gosling", "Emma Stone"]
     for name in list_of_names:
         if not os.path.isdir('./images/training'+"/"+name):
             search_and_download(name, driver, number_images=100)
