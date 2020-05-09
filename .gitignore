@@ -5,6 +5,7 @@ objects/*
 models/*
 databases/*
 .vscode/*
+Other/*
 */__pycache__/*
 *.pyc
 
