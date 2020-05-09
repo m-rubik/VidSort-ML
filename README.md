@@ -8,7 +8,9 @@ Code and inspiration sources:
 
 [Face Recognition Library](https://github.com/ageitgey/face_recognition/blob/master/README.md#installation)
 
-![face_detection_picture](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/1.jpg "Logo Title Text 1")
+![face_detection_picture](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/1.jpg)
+
+![face_detection_picture_2](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/2.jpg)
 
 ## Installation
 
