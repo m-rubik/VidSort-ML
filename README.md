@@ -8,6 +8,8 @@ Code and inspiration sources:
 
 [Face Recognition Library](https://github.com/ageitgey/face_recognition/blob/master/README.md#installation)
 
+![face_detection_picture](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/1.jpg "Logo Title Text 1")
+
 ## Installation
 
 In order to install the *face_recognition* library, ensure that the order of pip install is as follows:
