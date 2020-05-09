@@ -16,6 +16,8 @@ def load_model(model_name):
 
 def save_model(model_name, model):
     try:
+        if not os.path.exists("./models/"):
+            os.makedirs("./models/")
         with open("./models/"+model_name, 'wb+') as f:
             pickle.dump(model, f)
     except Exception as e:
@@ -138,5 +140,5 @@ def test_model(model_name, test_image_name):
         index += 1
 
 if __name__ == "__main__":
-    # train_model("top10")
+    train_model("top10")
     test_model("top9", "1.jpg")

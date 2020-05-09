@@ -1,5 +1,6 @@
 import pickle
 import pprint
+import os
 
 class database:
 
@@ -35,6 +36,8 @@ def load_database(name):
 
 def save_database(db):
     try:
+        if not os.path.exists("./databases/"):
+            os.makedirs("./databases/")
         with open("./databases/"+db.name, 'wb') as f:
             pickle.dump(db, f)
     except Exception as e:

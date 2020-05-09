@@ -59,7 +59,7 @@ class App(QWidget):
         self.Button_start.move(5,80)
         self.Button_start.clicked.connect(self.start)
 
-        self.Button_Exit = QPushButton('Exit', self)
+        self.Button_Exit = QPushButton('EXIT', self)
         self.Button_Exit.setToolTip('Exit the program')
         self.Button_Exit.move(80,80)
         self.Button_Exit.clicked.connect(self.closeEvent)
