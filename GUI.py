@@ -37,11 +37,13 @@ class MyTableWidget(QWidget):
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
         self.tab2 = QWidget()
+        self.tab3 = QWidget()
         self.tabs.resize(300,200)
         
         # Add tabs
-        self.tabs.addTab(self.tab1,"Run")
+        self.tabs.addTab(self.tab1,"Analyse")
         self.tabs.addTab(self.tab2,"Train")
+        self.tabs.addTab(self.tab3,"Search")
         
         # Create first tab
         self.tab1.layout = QVBoxLayout(self)
