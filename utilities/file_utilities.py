@@ -1,6 +1,5 @@
 import os
 
-
 def get_unique_filename(path):
     files = os.listdir(path)
     max_num = 0

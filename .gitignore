@@ -10,3 +10,9 @@ Other/*
 *.pyc
 
 Pipfile.lock
+
+/configurations/*
+!/configurations/sample
+
+/models/*
+!/models/sample

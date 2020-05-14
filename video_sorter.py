@@ -145,4 +145,4 @@ class videoAnalyser():
 
 if __name__ == "__main__":
     va = videoAnalyser("./videos/Youtube/Top 10 Most Popular Celebrities on Social Media.mp4", "top9", 2)
-    va.detect_faces_in_video(save_threshold=85)
+    va.detect_faces_in_video(detection_threshold=75, save_threshold=85)

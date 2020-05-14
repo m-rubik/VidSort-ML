@@ -5,11 +5,10 @@ from PyQt5.QtCore import *
 from video_sorter import videoAnalyser
 import os
 import time
+import pickle
 from utilities.database_utilities import load_database
 
-class App(QWidget):
-
-    completed_videos: list = []
+class App(QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -18,81 +17,155 @@ class App(QWidget):
         self.top = 100
         self.width = 590
         self.height = 150
-        self.initUI()
-    
-    def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
+        self.table_widget = MyTableWidget(self)
+        self.setCentralWidget(self.table_widget)
+        
+        self.show()
+    
+class MyTableWidget(QWidget):
+
+    completed_videos: list = []
+    
+    def __init__(self, parent):
+        super(QWidget, self).__init__(parent)
+        self.layout = QVBoxLayout(self)
+        
+        # Initialize tab screen
+        self.tabs = QTabWidget()
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+        self.tabs.resize(300,200)
+        
+        # Add tabs
+        self.tabs.addTab(self.tab1,"Run")
+        self.tabs.addTab(self.tab2,"Train")
+        
+        # Create first tab
+        self.tab1.layout = QVBoxLayout(self)
+
+        # Populate the first tab
+        self.tab1.form_layout = QFormLayout()
+
+        # Add the select video and classifier entries
+        self.tab1.Button_choose_video_folder = QPushButton('Select Video Folder', self)
+        self.tab1.Button_choose_video_folder.setToolTip('Select the video folder')
+        self.tab1.Button_choose_video_folder.clicked.connect(self.choose_video_folder)
+        self.tab1.Line_video_folder = QLineEdit(self)
+        self.tab1.Line_video_folder.setEnabled(True)
+        self.tab1.Line_video_folder.setPlaceholderText("...")
+        self.tab1.form_layout.addRow(self.tab1.Button_choose_video_folder, self.tab1.Line_video_folder)
+
+        self.tab1.Button_choose_classifier_model = QPushButton('Select Classifier', self)
+        self.tab1.Button_choose_classifier_model.setToolTip('Select the classifier')
+        self.tab1.Button_choose_classifier_model.clicked.connect(self.choose_classifier_model)
+        self.tab1.Line_classifier_model = QLineEdit(self)
+        self.tab1.Line_classifier_model.setEnabled(True)
+        self.tab1.Line_classifier_model.setPlaceholderText("...")
+        self.tab1.form_layout.addRow(self.tab1.Button_choose_classifier_model, self.tab1.Line_classifier_model)
+
+        self.tab1.layout.addLayout(self.tab1.form_layout)
+
+        # Add other operating parameters
+        self.tab1.params_layout = QHBoxLayout()
+        v_box = QVBoxLayout()
+        v_box.addWidget(QLabel("Capture Interval"))
+        self.tab1.Spin_capture_interval = QSpinBox()
+        self.tab1.Spin_capture_interval.setValue(2)
+        self.tab1.Spin_capture_interval.setMinimum(1)
+        self.tab1.Spin_capture_interval.resize(30, 32)
+        self.tab1.Spin_capture_interval.setToolTip(r'Analyse only every nth second of the video, where n is the provided integer. A higher n results in less frames being analysed, but faster analysis times.')
+        v_box.addWidget(self.tab1.Spin_capture_interval)
+        self.tab1.params_layout.addLayout(v_box)
+
+        v_box = QVBoxLayout()
+        v_box.addWidget(QLabel("Detection Threshold"))
+        self.tab1.Spin_detection_threshold = QSpinBox()
+        self.tab1.Spin_detection_threshold.setValue(75)
+        self.tab1.Spin_detection_threshold.setRange(1, 100)
+        self.tab1.Spin_detection_threshold.setToolTip(r"Classifier must have confidence >= n% to match a face with a person.")
+        v_box.addWidget(self.tab1.Spin_detection_threshold)
+        self.tab1.params_layout.addLayout(v_box)
+
+        v_box = QVBoxLayout()
+        v_box.addWidget(QLabel("Save Threshold"))
+        self.tab1.Spin_save_threshold = QSpinBox()
+        self.tab1.Spin_save_threshold.setValue(85)
+        self.tab1.Spin_save_threshold.setRange(1, 100)
+        self.tab1.Spin_save_threshold.setToolTip(r"Classifier must have confidence >= n% to save the face it found for future training of that person.")
+        v_box.addWidget(self.tab1.Spin_save_threshold)
+        self.tab1.params_layout.addLayout(v_box)
+
+        self.tab1.layout.addLayout(self.tab1.params_layout)
+
+        # Add all buttons
+        self.tab1.buttons_layout = QVBoxLayout()
+        h_box = QHBoxLayout()
+        self.tab1.Button_Exit = QPushButton('Load', self)
+        self.tab1.Button_Exit.setToolTip('Load parameters from a configuration file')
+        self.tab1.Button_Exit.clicked.connect(self.load_configuration)
+        h_box.addWidget(self.tab1.Button_Exit)
+
+        self.tab1.Button_Save = QPushButton('Save', self)
+        self.tab1.Button_Save.setToolTip('Save entered parameters to a configuration file')
+        self.tab1.Button_Save.clicked.connect(self.save_configuration)
+        h_box.addWidget(self.tab1.Button_Save)
+
+        self.tab1.Button_Load = QPushButton('EXIT', self)
+        self.tab1.Button_Load.setToolTip('Exit the program')
+        self.tab1.Button_Load.clicked.connect(self.closeEvent)
+        h_box.addWidget(self.tab1.Button_Load)
+
+        self.tab1.buttons_layout.addLayout(h_box)
+
+        self.tab1.Button_start = QPushButton('START', self)
+        self.tab1.Button_start.setToolTip('Start the classification')
+        self.tab1.Button_start.clicked.connect(self.start)
+        self.tab1.buttons_layout.addWidget(self.tab1.Button_start)
+
+        self.tab1.layout.addLayout(self.tab1.buttons_layout)
+
+        self.tab1.setLayout(self.tab1.layout)
+        
+        # Add tabs to widget
+        self.layout.addWidget(self.tabs)
+        self.setLayout(self.layout)
+
         self.threadpool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
-
-        # Add elements
-        self.Label_video_folder = QLabel(self)
-        self.Label_video_folder.setText('Video Folder:')
-        self.Line_video_folder = QLineEdit(self)
-        self.Line_video_folder.setEnabled(True)
-        self.Line_video_folder.setPlaceholderText("...")
-        self.Line_video_folder.move(80, 5)
-        self.Line_video_folder.resize(400, 32)
-        self.Label_video_folder.move(5,13)
-        self.Button_choose_video_folder = QPushButton('Select Video Folder', self)
-        self.Button_choose_video_folder.setToolTip('Select the video folder')
-        self.Button_choose_video_folder.move(485,10)
-        self.Button_choose_video_folder.clicked.connect(self.choose_folder)
-
-        self.Label_classifier_model = QLabel(self)
-        self.Label_classifier_model.setText('Classifier:')
-        self.Line_classifier_model = QLineEdit(self)
-        self.Line_classifier_model.setEnabled(True)
-        self.Line_classifier_model.setPlaceholderText("...")
-        self.Line_classifier_model.move(80, 40)
-        self.Line_classifier_model.resize(400, 32)
-        self.Label_classifier_model.move(5,47)
-        self.Button_choose_classifier_model = QPushButton('Select Classifier', self)
-        self.Button_choose_classifier_model.setToolTip('Select the classifier')
-        self.Button_choose_classifier_model.move(485,42)
-        self.Button_choose_classifier_model.clicked.connect(self.choose_classifier_model)
-
-        self.Button_start = QPushButton('START', self)
-        self.Button_start.setToolTip('Start the classification')
-        self.Button_start.move(5,80)
-        self.Button_start.clicked.connect(self.start)
-
-        self.Button_Exit = QPushButton('EXIT', self)
-        self.Button_Exit.setToolTip('Exit the program')
-        self.Button_Exit.move(80,80)
-        self.Button_Exit.clicked.connect(self.closeEvent)
+        print("NOT IMPLEMENTED YET --- Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
         self.show()
 
     @pyqtSlot()
-    def choose_folder(self):
-        folder = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+    def choose_video_folder(self):
+        folder = str(QFileDialog.getExistingDirectory(self, "Select Directory", "./videos/"))
         if folder:
-            self.Line_video_folder.setText(folder)
+            self.tab1.Line_video_folder.setText(folder)
     
     @pyqtSlot()
     def choose_classifier_model(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"Choose file", "","All Files (*)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"Choose file", "./models/","All Files (*)", options=options)
         if fileName:
-            self.Line_classifier_model.setText(fileName)
+            self.tab1.Line_classifier_model.setText(fileName)
         # Load the associated database
-        self.db = load_database(os.path.split(self.Line_classifier_model.text())[1])
+        self.db = load_database(os.path.split(self.tab1.Line_classifier_model.text())[1])
 
     @pyqtSlot()
     def start(self):
-        self.Button_start.setEnabled(False)
-        self.model_name = os.path.split(self.Line_classifier_model.text())[1]
-        if len(self.completed_videos) == len(os.listdir(self.Line_video_folder.text())):
-            self.Button_start.setEnabled(True)
+        self.tab1.Button_start.setEnabled(False)
+        self.model_name = os.path.split(self.tab1.Line_classifier_model.text())[1]
+        if len(self.completed_videos) == len(os.listdir(self.tab1.Line_video_folder.text())):
+            print("All videos in the provided folder have been analysed.")
+            self.tab1.Button_start.setEnabled(True)
             return 0
-        for video in os.listdir(self.Line_video_folder.text()):
+        for video in os.listdir(self.tab1.Line_video_folder.text()):
             if video not in self.completed_videos:
                 if video not in self.db.data.keys():
-                    worker = Worker(self.execute_this_fn, (self.Line_video_folder.text() + '/' + video, self.model_name, 2, 85,))
+                    worker = Worker(self.execute_this_fn, (self.tab1.Line_video_folder.text() + '/' + video, self.model_name, self.tab1.Spin_capture_interval.value(), self.tab1.Spin_detection_threshold.value(), self.tab1.Spin_save_threshold.value(),))
                     worker.signals.result.connect(self.print_output)
                     worker.signals.finished.connect(self.thread_complete)
                     worker.signals.progress.connect(self.progress_fn)
@@ -106,22 +179,49 @@ class App(QWidget):
                     print(video, "has already been analysed.")
                     self.completed_videos.append(video)
                     self.start()
-    
-    # @pyqtSlot()
-    # def open_multiple_files(self):
-    #     options = QFileDialog.Options()
-    #     options |= QFileDialog.DontUseNativeDialog
-    #     files, _ = QFileDialog.getOpenFileNames(self,"Choose files", "","All Files (*);;Python Files (*.py)", options=options)
-    #     if files:
-    #         print(files)
-    
-    # @pyqtSlot()
-    # def save_file_dialog(self):
-    #     options = QFileDialog.Options()
-    #     options |= QFileDialog.DontUseNativeDialog
-    #     fileName, _ = QFileDialog.getSaveFileName(self,"Choose save file","","All Files (*);;Text Files (*.txt)", options=options)
-    #     if fileName:
-    #         print(fileName)
+
+
+    @pyqtSlot()
+    def load_configuration(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        filepath, _ = QFileDialog.getOpenFileName(self,"Choose file", "./configurations/", "All Files (*);;Python Files (*.py)", options=options)
+        if filepath:
+            try:
+                with open(filepath, 'rb+') as f:
+                    configuration = pickle.load(f)
+                    self.tab1.Line_video_folder.setText(configuration["video folder"])
+                    self.tab1.Line_classifier_model.setText(configuration["classifier path"])
+                    self.tab1.Spin_capture_interval.setValue(configuration["capture interval"])
+                    self.tab1.Spin_detection_threshold.setValue(configuration["detection threshold"])
+                    self.tab1.Spin_save_threshold.setValue(configuration["save threshold"])
+                    print("Load successful.")
+            except Exception as e:
+                print(e)
+                return 1
+            return 0
+
+    @pyqtSlot()
+    def save_configuration(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,"Choose save file", "./configurations/", "All Files (*)", options=options)
+        if fileName:
+            try:
+                with open(fileName, 'wb+') as f:
+                        configuration = {}
+                        # Get configuration stuff
+                        configuration["video folder"] = self.tab1.Line_video_folder.text()
+                        configuration["classifier path"] = self.tab1.Line_classifier_model.text()
+                        configuration["capture interval"] = self.tab1.Spin_capture_interval.value()
+                        configuration["detection threshold"] = self.tab1.Spin_detection_threshold.value()
+                        configuration["save threshold"] = self.tab1.Spin_save_threshold.value()
+                        pickle.dump(configuration, f)
+                        print("Save successful.")
+            except Exception as e:
+                print(e)
+                return 1
+            return 0
 
     @pyqtSlot()
     def closeEvent(self):
@@ -138,12 +238,14 @@ class App(QWidget):
 
         if reply == QMessageBox.Close:
             app.quit()
+        elif reply == QMessageBox.Save:
+            self.save_configuration()
 
     def execute_this_fn(self, *args, **kwargs):
         self.busy = True
-        video, model, time_skip, save_threshold = args[0]
-        va = videoAnalyser(video, model, time_skip)
-        va.detect_faces_in_video(save_threshold=save_threshold)
+        video, model, capture_interval, detection_threshold, save_threshold = args[0]
+        va = videoAnalyser(video, model, capture_interval)
+        va.detect_faces_in_video(detection_threshold=detection_threshold, save_threshold=save_threshold)
         return "Analysis finished."
 
     def print_output(self, s):
@@ -201,7 +303,7 @@ class Worker(QRunnable):
         '''
         # Retrieve args/kwargs here; and fire processing using them
         try:
-            video_name, _, _, _ = self.args[0]
+            video_name, _, _, _, _ = self.args[0]
             video_name = os.path.split(video_name)[1]
             result = self.fn(*self.args, **self.kwargs)
         except:
