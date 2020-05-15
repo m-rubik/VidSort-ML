@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import os
 from utilities.file_utilities import get_unique_filename
-from utilities.model_utilities import load_model
+from utilities.model_utilities import load_object
 from utilities.database_utilities import save_database, load_database
 
 class videoAnalyser():
@@ -23,7 +23,7 @@ class videoAnalyser():
         self.video_face_data = {}
 
         # Load the classifier
-        self.model = load_model(self.model_name)
+        self.model = load_object("./models/"+self.model_name)
 
         # Load the associated database
         self.db = load_database(self.model_name)

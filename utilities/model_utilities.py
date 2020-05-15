@@ -1,91 +1,112 @@
 import pickle
 import face_recognition
 from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from utilities.file_utilities import get_unique_filename
+import statistics
 import cv2
 import os
 
-def load_model(model_name):
+
+def load_object(path):
     try:
-        with open("./models/"+model_name, 'rb+') as f:
-            model = pickle.load(f)
+        with open(path, 'rb+') as f:
+            obj = pickle.load(f)
     except Exception as e:
         print(e)
         return 1
-    return model
+    return obj
 
-def save_model(model_name, model):
+def save_object(path, obj):
     try:
-        if not os.path.exists("./models/"):
-            os.makedirs("./models/")
-        with open("./models/"+model_name, 'wb+') as f:
-            pickle.dump(model, f)
+        folder = os.path.split(path)[0]
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        with open(path, 'wb+') as f:
+            pickle.dump(obj, f)
     except Exception as e:
         print(e)
         return 1
     return 0
 
-def train_model(model_name):
-    """
-    Structure:
-            images/
-                training/
-                    <person_1>/
-                        1.jpg
-                        2.jpg
-                        .
-                        .
-                        n.jpg
-                    <person_2>/
-                        1.jpg
-                        2.jpg
-                        .
-                        .
-                        n.jpg
-                    .
-                    .
-                    <person_n>/
-                        1.jpg
-                        2.jpg
-                        .
-                        .
-                        n.jpg
-    """
-   
-    # Training the SVC classifier
+def extract_all_face_encodings(path):
+    train_dir = os.listdir(path)
+    # TODO: Ensure that there is nothing but folders in this path...
+    for person_folder in train_dir:
+        if not os.path.exists("./encodings/"+person_folder):
+            extract_face_encodings(path+person_folder)
 
-    # The training data would be all the face encodings from all the known images and the labels are their names
+def extract_face_encodings(path):
+    """!
+    Iterate through a folder of images and extract the
+    facial featuresets (encodings). Add all encodings
+    to a list and save it under "./encodings/[name]"
+    """
+
     encodings = []
-    names = []
 
-    # Training directory
-    train_dir = os.listdir('./images/training/')
+    name = os.path.split(path)[1]
+    print("Extracting facial features of", name)
+    training_images = os.listdir(path)
+    
+    for image in training_images:
+        print("Analysing:", path + "/" + image)
+        face = face_recognition.load_image_file(path + "/" + image)
+        face_bounding_boxes = face_recognition.face_locations(face)
 
-    # Loop through each person in the training directory
-    for person in train_dir:
-        pix = os.listdir("./images/training/" + person)
-        print("Training classifier to recognize", person, "with", len(pix), 'images.')
+        if len(face_bounding_boxes) == 1: # Picture only contains 1 face
+            face_enc = face_recognition.face_encodings(face)[0]
+            encodings.append(face_enc)
+        elif len(face_bounding_boxes) == 0: # Picture must contain 1 face
+            print("WARNING: No face could be found. It is suggested you remove this image from future trainings.")
+        else: # Picture cannot contain more than 1 face
+            print("WARNING: More than one face is detected, so it cannot be used for training. It is suggested you remove this image from future trainings.")
 
-        # Loop through each training image for the current person
-        for person_img in pix:
-            # Get the face encodings for the face in each image file
-            face = face_recognition.load_image_file("./images/training/" + person + "/" + person_img)
-            face_bounding_boxes = face_recognition.face_locations(face)
+    save_object("./encodings/"+name, encodings)
+    return 0
 
-            if len(face_bounding_boxes) == 1: # If training image contains exactly one face
-                face_enc = face_recognition.face_encodings(face)[0]
-                # Add face encoding for current image with corresponding label (name) to the training data
-                encodings.append(face_enc)
-                names.append(person)
-            elif len(face_bounding_boxes) == 0:
-                print("WARNING: No face could be found in", person + "/" + person_img + " It is suggested you remove this image from this training folder.")
-            else:
-                print("WARNING: More than one face is detected in", person + "/" + person_img + ", so it cannot be used for training. It is suggested you remove this image from this training folder.")
+def train_model(model_name, names, model_type="mpl"):
+    """
+    1. For each name in the names list, open the face encodings of that person and add them to the master list
+    2. Fit the model with the master lists
+    """
 
-    # Create and train the SVC classifier
-    clf = svm.SVC(gamma='scale', probability=True)
-    clf.fit(encodings,names)
-    save_model(model_name, clf)
+    master_encodings = []
+    master_names = []
+
+    for name in names:
+        encodings = load_object("./encodings/"+name)
+        for encoding in encodings:
+            master_encodings.append(encoding)
+            master_names.append(name)
+
+    if model_type == "svc":
+        clf = clf = svm.SVC(gamma='scale', probability=True)
+    elif model_type == "knn":
+        clf = KNeighborsClassifier(n_neighbors=15)
+    elif model_type == "mpl":
+
+        # https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+        num_input_neurons = master_encodings[0].size
+        num_output_neurons = len(names)
+        num_samples = len(master_encodings)
+        scaling_factor = 2
+        # num_hidden_nodes = num_samples/(scaling_factor*(num_input_neurons+num_output_neurons))
+        num_hidden_nodes = round(num_input_neurons*(2/3) + num_output_neurons)
+        # num_hidden_nodes = round(statistics.mean([num_input_neurons, num_output_neurons]))
+
+        num_hidden_layers = 3
+        hidden_layer_sizes = tuple()
+        for _ in range(num_hidden_layers):
+            hidden_layer_sizes = hidden_layer_sizes + (round(num_hidden_nodes/num_hidden_layers),)
+
+        clf = MLPClassifier(hidden_layer_sizes=(num_hidden_nodes, ), max_iter=1000, verbose=True)
+
+    print("Training", model_type, "model...")
+    clf.fit(master_encodings,master_names)
+    save_object("./models/"+model_name, clf)
+    print("Model", model_name, "has been trained.")
 
 def test_model(model_name, test_image_name):
     """!
@@ -94,7 +115,7 @@ def test_model(model_name, test_image_name):
     2. Ensure that the model recognizes that person with a very high confidence
     """
 
-    clf = load_model(model_name)
+    clf = load_object("./models/"+model_name)
 
     # Load the test image with unknown faces into a numpy array
     test_image = face_recognition.load_image_file(test_image_name)
@@ -140,5 +161,7 @@ def test_model(model_name, test_image_name):
         index += 1
 
 if __name__ == "__main__":
-    train_model("top10")
-    test_model("top9", "1.jpg")
+    # extract_all_face_encodings('./images/training/')
+    names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
+    train_model(model_name="top10_mpl", names=names, model_type="mpl")
+    # test_model("top9", "1.jpg")
