@@ -44,8 +44,23 @@ class MyTableWidget(QWidget):
         self.tabs.addTab(self.tab1,"Analyse")
         self.tabs.addTab(self.tab2,"Train")
         self.tabs.addTab(self.tab3,"Search")
+
+        self.init_tab1()
+        self.init_tab2()
+        # self.init_tab3()
+
+        # Add tabs to widget
+        self.layout.addWidget(self.tabs)
+        self.setLayout(self.layout)
+
+        self.threadpool = QThreadPool()
+        print("NOT IMPLEMENTED YET --- Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
+        self.show()
+
+    def init_tab1(self):
         
-        # Create first tab
+        # Create first tab layout
         self.tab1.layout = QVBoxLayout(self)
 
         # Populate the first tab
@@ -130,15 +145,124 @@ class MyTableWidget(QWidget):
         self.tab1.layout.addLayout(self.tab1.buttons_layout)
 
         self.tab1.setLayout(self.tab1.layout)
+
+    def init_tab2(self):
+        self.tab2.layout = QHBoxLayout(self)
+        self.tab2.tableWidget = QTableWidget()
+        self.tab2.tableWidget.setColumnCount(1)
+        for name in os.listdir('./encodings/'):
+            rowPosition = self.tab2.tableWidget.rowCount()
+            self.tab2.tableWidget.insertRow(rowPosition)
+            self.tab2.tableWidget.setItem(rowPosition,0, QTableWidgetItem(name))
+        self.tab2.tableWidget.setHorizontalHeaderLabels(["Name"])
+        self.tab2.tableWidget.cellClicked.connect(self.cell_click)
+        self.tab2.layout.addWidget(self.tab2.tableWidget)
+
+        self.tab2.right_layout = QVBoxLayout()
+        self.tab2.form_layout = QFormLayout()
+
+        self.tab2.Button_choose_training_folder = QPushButton('Select Training Folder', self)
+        self.tab2.Button_choose_training_folder.setToolTip('Select the folder containing all training images.')
+        self.tab2.Button_choose_training_folder.clicked.connect(self.choose_training_folder)
+        self.tab2.Line_training_folder = QLineEdit(self)
+        self.tab2.Line_training_folder.setEnabled(True)
+        self.tab2.Line_training_folder.setPlaceholderText("...")
+        self.tab2.form_layout.addRow(self.tab2.Button_choose_training_folder, self.tab2.Line_training_folder)
+
+        self.tab2.Label_model_name = QLabel()
+        self.tab2.Label_model_name.setText("Model name:")
+        # self.tab2.Label_model_name.setAlignment(Qt.AlignCenter)
+        self.tab2.Line_model_name = QLineEdit(self)
+        self.tab2.Line_model_name.setEnabled(True)
+        self.tab2.Line_model_name.setPlaceholderText("...")
+        self.tab2.form_layout.addRow(self.tab2.Label_model_name, self.tab2.Line_model_name)
+
+        self.tab2.right_layout.addLayout(self.tab2.form_layout)
         
-        # Add tabs to widget
-        self.layout.addWidget(self.tabs)
-        self.setLayout(self.layout)
+        self.tab2.radio_buttons_layout = QHBoxLayout()
+        self.tab2.Label_radio_buttons = QLabel()
+        self.tab2.Label_radio_buttons.setText("Model type:")
+        self.tab2.radio_buttons_layout.addWidget(self.tab2.Label_radio_buttons)
+        self.tab2.rb_mlp = QRadioButton("MLP")
+        self.tab2.rb_svc = QRadioButton("SVC")
+        self.tab2.rb_knn = QRadioButton("KNN")
+        self.tab2.rb_mlp.setChecked(True)
+        self.tab2.rb_svc.setChecked(False)
+        self.tab2.rb_knn.setChecked(False)
+        self.tab2.rb_mlp.toggled.connect(lambda:self.rb_state_change(self.tab2.rb_mlp))
+        self.tab2.rb_svc.toggled.connect(lambda:self.rb_state_change(self.tab2.rb_svc))
+        self.tab2.rb_knn.toggled.connect(lambda:self.rb_state_change(self.tab2.rb_knn))
 
-        self.threadpool = QThreadPool()
-        print("NOT IMPLEMENTED YET --- Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+        self.tab2.radio_buttons_layout.addWidget(self.tab2.rb_mlp)
+        self.tab2.radio_buttons_layout.addWidget(self.tab2.rb_svc)
+        self.tab2.radio_buttons_layout.addWidget(self.tab2.rb_knn)
 
-        self.show()
+        self.tab2.right_layout.addLayout(self.tab2.radio_buttons_layout)
+
+        self.tab2.buttons_layout = QHBoxLayout()
+        self.tab2.Button_Train = QPushButton('TRAIN', self)
+        self.tab2.Button_Train.setToolTip('Train the model with the selected people')
+        self.tab2.Button_Train.clicked.connect(self.train)
+        self.tab2.buttons_layout.addWidget(self.tab2.Button_Train)
+        self.tab2.Button_Learn = QPushButton('LEARN', self)
+        self.tab2.Button_Learn.setToolTip('Learn the faces of the people in the training folder')
+        self.tab2.Button_Learn.clicked.connect(self.learn)
+        self.tab2.buttons_layout.addWidget(self.tab2.Button_Learn)
+
+        self.tab2.right_layout.addLayout(self.tab2.buttons_layout)
+
+        self.tab2.layout.addLayout(self.tab2.right_layout)
+        self.tab2.setLayout(self.tab2.layout)
+
+    def learn(self):
+        # TODO: Make this multithreaded so it doesn't block the GUI process and cause it to timeout...
+        from utilities.model_utilities import extract_all_face_encodings
+        print("LEARNING....")
+        extract_all_face_encodings(self.tab2.Line_training_folder.text())
+
+    def train(self):
+        # TODO: Make this multithreaded so it doesn't block the GUI process and cause it to timeout...
+        from utilities.model_utilities import train_model
+        names = []
+        for row in range(self.tab2.tableWidget.rowCount()):
+            if self.tab2.tableWidget.item(row, 0).background() == QBrush(QColor("green")):
+                names.append(self.tab2.tableWidget.item(row, 0).text())
+        print("TRAINING....")
+        if self.tab2.rb_mlp.isChecked():
+            model_type="mlp"
+        elif self.tab2.rb_svc.isChecked():
+            model_type="svc"
+        elif self.tab2.rb_knn.isChecked():
+            model_type="knn"
+        else:
+            model_type = None
+        train_model(model_name=self.tab2.Line_model_name.text(), names=names, model_type=model_type)
+
+    def rb_state_change(self, rb):
+        if rb.text() == "MLP":
+            if rb.isChecked() == True:
+                self.tab2.rb_svc.setChecked(False)
+                self.tab2.rb_knn.setChecked(False)
+        if rb.text() == "SVC":
+            if rb.isChecked() == True:
+                self.tab2.rb_mlp.setChecked(False)
+                self.tab2.rb_knn.setChecked(False)
+        if rb.text() == "KNN":
+            if rb.isChecked() == True:
+                self.tab2.rb_svc.setChecked(False)
+                self.tab2.rb_mlp.setChecked(False)
+
+    def cell_click(self, index):
+        if self.tab2.tableWidget.item(index, 0).background() == QBrush(QColor("green")):
+            self.tab2.tableWidget.item(index, 0).setBackground(QBrush(QColor("white")))
+        else:
+            self.tab2.tableWidget.item(index, 0).setBackground(QBrush(QColor("green")))
+    
+    @pyqtSlot()
+    def choose_training_folder(self):
+        folder = str(QFileDialog.getExistingDirectory(self, "Select Directory", "./images/training/"))
+        if folder:
+            self.tab2.Line_training_folder.setText(folder)
 
     @pyqtSlot()
     def choose_video_folder(self):

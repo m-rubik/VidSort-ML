@@ -47,6 +47,7 @@ def draw_neural_net(name, left=0.1, right=0.9, bottom=0.1, top=0.9):
                 ax.add_artist(line)
 
 if __name__ == "__main__":
-    names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
+    # names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
+    names = ["Ryan Gosling", "Emma Stone"]
     plot_encodings(names)
     # draw_neural_net("top10_mpl")

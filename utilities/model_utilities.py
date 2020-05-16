@@ -66,7 +66,7 @@ def extract_face_encodings(path):
     save_object("./encodings/"+name, encodings)
     return 0
 
-def train_model(model_name, names, model_type="mpl"):
+def train_model(model_name, names, model_type="mlp"):
     """
     1. For each name in the names list, open the face encodings of that person and add them to the master list
     2. Fit the model with the master lists
@@ -85,7 +85,7 @@ def train_model(model_name, names, model_type="mpl"):
         clf = clf = svm.SVC(gamma='scale', probability=True)
     elif model_type == "knn":
         clf = KNeighborsClassifier(n_neighbors=15)
-    elif model_type == "mpl":
+    elif model_type == "mlp":
 
         # https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
         num_input_neurons = master_encodings[0].size
@@ -162,6 +162,7 @@ def test_model(model_name, test_image_name):
 
 if __name__ == "__main__":
     # extract_all_face_encodings('./images/training/')
-    names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
-    train_model(model_name="top10_mpl", names=names, model_type="mpl")
+    names = ["Ryan Gosling", "Emma Stone"]
+    # names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
+    train_model(model_name="lalaland_mlp", names=names, model_type="mlp")
     # test_model("top9", "1.jpg")
