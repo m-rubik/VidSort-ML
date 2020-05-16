@@ -47,7 +47,7 @@ class MyTableWidget(QWidget):
 
         self.init_tab1()
         self.init_tab2()
-        # self.init_tab3()
+        self.init_tab3()
 
         # Add tabs to widget
         self.layout.addWidget(self.tabs)
@@ -58,6 +58,7 @@ class MyTableWidget(QWidget):
 
         self.show()
 
+    @pyqtSlot()
     def init_tab1(self):
         
         # Create first tab layout
@@ -146,16 +147,10 @@ class MyTableWidget(QWidget):
 
         self.tab1.setLayout(self.tab1.layout)
 
+    @pyqtSlot()
     def init_tab2(self):
         self.tab2.layout = QHBoxLayout(self)
-        self.tab2.tableWidget = QTableWidget()
-        self.tab2.tableWidget.setColumnCount(1)
-        for name in os.listdir('./encodings/'):
-            rowPosition = self.tab2.tableWidget.rowCount()
-            self.tab2.tableWidget.insertRow(rowPosition)
-            self.tab2.tableWidget.setItem(rowPosition,0, QTableWidgetItem(name))
-        self.tab2.tableWidget.setHorizontalHeaderLabels(["Name"])
-        self.tab2.tableWidget.cellClicked.connect(self.cell_click)
+        self.update_table()
         self.tab2.layout.addWidget(self.tab2.tableWidget)
 
         self.tab2.right_layout = QVBoxLayout()
@@ -214,12 +209,30 @@ class MyTableWidget(QWidget):
         self.tab2.layout.addLayout(self.tab2.right_layout)
         self.tab2.setLayout(self.tab2.layout)
 
+    @pyqtSlot()
+    def init_tab3(self):
+        pass
+
+    @pyqtSlot()
+    def update_table(self):
+        self.tab2.tableWidget = QTableWidget()
+        self.tab2.tableWidget.setColumnCount(1)
+        for name in os.listdir('./encodings/'):
+            rowPosition = self.tab2.tableWidget.rowCount()
+            self.tab2.tableWidget.insertRow(rowPosition)
+            self.tab2.tableWidget.setItem(rowPosition,0, QTableWidgetItem(name))
+        self.tab2.tableWidget.setHorizontalHeaderLabels(["Name"])
+        self.tab2.tableWidget.cellClicked.connect(self.cell_click)
+
+    @pyqtSlot()
     def learn(self):
         # TODO: Make this multithreaded so it doesn't block the GUI process and cause it to timeout...
         from utilities.model_utilities import extract_all_face_encodings
         print("LEARNING....")
         extract_all_face_encodings(self.tab2.Line_training_folder.text())
+        self.update_table()
 
+    @pyqtSlot()
     def train(self):
         # TODO: Make this multithreaded so it doesn't block the GUI process and cause it to timeout...
         from utilities.model_utilities import train_model
@@ -238,6 +251,7 @@ class MyTableWidget(QWidget):
             model_type = None
         train_model(model_name=self.tab2.Line_model_name.text(), names=names, model_type=model_type)
 
+    @pyqtSlot()
     def rb_state_change(self, rb):
         if rb.text() == "MLP":
             if rb.isChecked() == True:

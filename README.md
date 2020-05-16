@@ -91,7 +91,7 @@ NOTE 2: It is suggested you manually browse through the images obtained from Goo
 4. Press "START"
 5. Each video will now be analysed 1-by-1 (though in the future it may be done in parallel). For each video is processes, it will add an entry into a database (found in "./databases") with the same name as the model's name. The overall process is complete when the "START" button is no longer grayed-out.
 
-### 5. Searching a databases for people ###
+### 5. Searching a database for people ###
 Once your video sets have been analysed:
 1. Open **./utilities.database_utilities.py**
 2. use the following commands and make adjustments where required ("Test" is the model's name):
