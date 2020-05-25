@@ -25,9 +25,10 @@ def draw_neural_net(name, left=0.1, right=0.9, bottom=0.1, top=0.9):
     # mlp = load_object("./models/"+name)
     # print(mlp.coefs_)
     ax.axis('off')
-    layer_sizes = [128,30,30,30,10] # TODO
+    # layer_sizes = [128,30,30,30,10] # TODO
+    layer_sizes = [128,110,10]
     # n_layers = len(layer_sizes)
-    n_layers = 5
+    n_layers = 3
     v_spacing = (top - bottom)/float(max(layer_sizes))
     h_spacing = (right - left)/float(len(layer_sizes) - 1)
     # Nodes
@@ -50,6 +51,6 @@ def draw_neural_net(name, left=0.1, right=0.9, bottom=0.1, top=0.9):
 
 if __name__ == "__main__":
     # names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
-    names = ["Ryan Gosling", "Emma Stone"]
+    # names = ["Ryan Gosling", "Emma Stone"]
     # plot_encodings(names)
     draw_neural_net("top10_mpl")

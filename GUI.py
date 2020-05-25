@@ -53,8 +53,7 @@ class MyTableWidget(QWidget):
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
 
-        self.threadpool = QThreadPool()
-        print("NOT IMPLEMENTED YET --- Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+        self.first = True
 
         self.show()
 
@@ -291,16 +290,23 @@ class MyTableWidget(QWidget):
         fileName, _ = QFileDialog.getOpenFileName(self,"Choose file", "./models/","All Files (*)", options=options)
         if fileName:
             self.tab1.Line_classifier_model.setText(fileName)
-        # Load the associated database
+
+    def start_init(self):
+        self.model_name = os.path.split(self.tab1.Line_classifier_model.text())[1]
         self.db = load_database(os.path.split(self.tab1.Line_classifier_model.text())[1])
+        self.threadpool = QThreadPool()
+        self.first = False
 
     @pyqtSlot()
     def start(self):
+        if self.first:
+            self.start_init()
         self.tab1.Button_start.setEnabled(False)
-        self.model_name = os.path.split(self.tab1.Line_classifier_model.text())[1]
+        print("NOT IMPLEMENTED YET --- Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
         if len(self.completed_videos) == len(os.listdir(self.tab1.Line_video_folder.text())):
             print("All videos in the provided folder have been analysed.")
             self.tab1.Button_start.setEnabled(True)
+            self.first = True
             return 0
         for video in os.listdir(self.tab1.Line_video_folder.text()):
             if video not in self.completed_videos:

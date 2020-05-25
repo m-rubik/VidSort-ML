@@ -135,26 +135,15 @@ def train_model(model_name, names, model_type="mlp"):
     clf.fit(X_train,y_train)
 
     print("Best parameters set found on development set:")
-    print()
     print(clf.best_params_)
-    print()
     print("Grid scores on development set:")
-    print()
     means = clf.cv_results_['mean_test_score']
     stds = clf.cv_results_['std_test_score']
     for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-        print("%0.3f (+/-%0.03f) for %r"
-            % (mean, std * 2, params))
-    print()
-
+        print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
     print("Detailed classification report:")
-    print()
-    print("The model is trained on the full development set.")
-    print("The scores are computed on the full evaluation set.")
-    print()
     y_true, y_pred = y_test, clf.predict(X_test)
     print(classification_report(y_true, y_pred))
-    print()
 
     save_object("./models/"+model_name, clf)
     print("Model", model_name, "has been trained.")
@@ -176,8 +165,9 @@ def test_model(model_name, test_image_name):
     face_encodings = face_recognition.face_encodings(test_image, face_locations)
 
     # Scale the input data
-    scaler = StandardScaler()
-    face_encodings = scaler.fit_transform(face_encodings)
+    if face_encodings:
+        scaler = StandardScaler()
+        face_encodings = scaler.fit_transform(face_encodings)
 
     index = 0
     for face_encoding in face_encodings:

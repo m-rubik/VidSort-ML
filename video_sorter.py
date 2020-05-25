@@ -5,6 +5,7 @@ import os
 from utilities.file_utilities import get_unique_filename
 from utilities.model_utilities import load_object
 from utilities.database_utilities import save_database, load_database
+from sklearn.preprocessing import StandardScaler
 
 class videoAnalyser():
 
@@ -64,6 +65,10 @@ class videoAnalyser():
                 # Find all the faces and face encodings in the current frame of video
                 face_locations = face_recognition.face_locations(small_frame)
                 face_encodings = face_recognition.face_encodings(small_frame, face_locations)
+                scaler = StandardScaler()
+                if face_encodings:
+                    scaler = StandardScaler()
+                    face_encodings = scaler.fit_transform(face_encodings)
 
                 index = 0
                 for face_encoding in face_encodings:
