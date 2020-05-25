@@ -14,9 +14,9 @@ To train the DNN, [Selenium](https://pypi.org/project/selenium/) is used to auto
 
 With a trained model, all faces detected within an image will be compared against the collection of known faces, and assigned a probability of the face belonging to each person that the model is trained to recognize. If the probability is sufficiently high for a given person, and if the probability assigned to that person is higher than all the rest, the algorithm declares that the face belongs to that person. There is an even higher threshold at which the algorithm is so confident that the face belongs to a certain person that is takes a snapshot of the face and saves it so it can be used for future training iterations.
 
-![face_detection_picture](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/1.jpg)
+![example_pic_lalaland](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/Lalaland.jpg)
 
-![face_detection_picture_2](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/2.jpg)
+![example_pic_avengers](https://raw.githubusercontent.com/m-rubik/VidSort-ML/master/examples/images/Avengers.jpg)
 
 ## Installation
 
