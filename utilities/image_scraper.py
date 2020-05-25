@@ -136,9 +136,34 @@ def search_and_download(search_term:str,driver_path:str,target_path='./images/tr
 
 if __name__ == "__main__":
     driver = webdriver.Chrome(ChromeDriverManager().install())
-    # names = ["Dakota Johnson", "Jamie Dornan"]
     # names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
-    names = ["Ryan Gosling", "Emma Stone"]
+    # names = ["Ryan Gosling", "Emma Stone"]
+    names = [
+        "Robert Downey Jr.", 
+        "Chris Evans", 
+        "Chris Hemsworth", 
+        "Mark Ruffalo", 
+        "Scarlett Johansson", 
+        "Jeremy Renner", 
+        "Anthony Mackie", 
+        "Paul Rudd", 
+        "Paul Bettany", 
+        "Elizabeth Olsen", 
+        "Don Cheadle", 
+        "Benedict Cumberbatch", 
+        "Tom Holland", 
+        "Karen Gillan", 
+        "Chris Pratt", 
+        "Chadwick Boseman", 
+        "Vin Diesel", 
+        "Bradley Cooper", 
+        "Zoe Saldana", 
+        "Pom Klementieff", 
+        "Dave Bautista", 
+        "Josh Brolin", 
+        "Tom Hiddleston", 
+        "Benicio Del Toro", 
+        "Peter Dinklage"]
     for name in names:
         if not os.path.isdir('./images/training'+"/"+name):
             search_and_download(name, driver, number_images=100)
