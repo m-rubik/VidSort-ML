@@ -2,11 +2,14 @@ import sys
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from video_sorter import videoAnalyser
+from vidsortml.video_sorter import videoAnalyser
 import os
 import time
 import pickle
-from utilities.database_utilities import load_database
+import pathlib
+from vidsortml.utilities.database_utilities import load_database
+
+CONFIGURATIONS_ROOT_DIR = pathlib.Path(__file__).parent / 'configurations'
 
 class App(QMainWindow):
 
@@ -216,17 +219,20 @@ class MyTableWidget(QWidget):
     def update_table(self):
         self.tab2.tableWidget = QTableWidget()
         self.tab2.tableWidget.setColumnCount(1)
-        for name in os.listdir('./encodings/'):
-            rowPosition = self.tab2.tableWidget.rowCount()
-            self.tab2.tableWidget.insertRow(rowPosition)
-            self.tab2.tableWidget.setItem(rowPosition,0, QTableWidgetItem(name))
+        root_dir = pathlib.Path(__file__).parent
+        encodings_dir = pathlib.Path(root_dir / 'encodings')
+        if encodings_dir.is_dir():
+            for name in encodings_dir.iterdir():
+                rowPosition = self.tab2.tableWidget.rowCount()
+                self.tab2.tableWidget.insertRow(rowPosition)
+                self.tab2.tableWidget.setItem(rowPosition,0, QTableWidgetItem(name.stem))
         self.tab2.tableWidget.setHorizontalHeaderLabels(["Name"])
         self.tab2.tableWidget.cellClicked.connect(self.cell_click)
 
     @pyqtSlot()
     def learn(self):
         # TODO: Make this multithreaded so it doesn't block the GUI process and cause it to timeout...
-        from utilities.model_utilities import extract_all_face_encodings
+        from vidsortml.utilities.model_utilities import extract_all_face_encodings
         print("LEARNING....")
         extract_all_face_encodings(self.tab2.Line_training_folder.text())
         self.update_table()
@@ -234,7 +240,7 @@ class MyTableWidget(QWidget):
     @pyqtSlot()
     def train(self):
         # TODO: Make this multithreaded so it doesn't block the GUI process and cause it to timeout...
-        from utilities.model_utilities import train_model
+        from vidsortml.utilities.model_utilities import train_model
         names = []
         for row in range(self.tab2.tableWidget.rowCount()):
             if self.tab2.tableWidget.item(row, 0).background() == QBrush(QColor("green")):
@@ -331,7 +337,7 @@ class MyTableWidget(QWidget):
     def load_configuration(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        filepath, _ = QFileDialog.getOpenFileName(self,"Choose file", "./configurations/", "All Files (*);;Python Files (*.py)", options=options)
+        filepath, _ = QFileDialog.getOpenFileName(self,"Choose file", str(CONFIGURATIONS_ROOT_DIR), "All Files (*);;Python Files (*.py)", options=options)
         if filepath:
             try:
                 with open(filepath, 'rb+') as f:
@@ -351,7 +357,7 @@ class MyTableWidget(QWidget):
     def save_configuration(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,"Choose save file", "./configurations/", "All Files (*)", options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,"Choose save file", str(CONFIGURATIONS_ROOT_DIR), "All Files (*)", options=options)
         if fileName:
             try:
                 with open(fileName, 'wb+') as f:

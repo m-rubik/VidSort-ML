@@ -1,16 +1,20 @@
 import pickle
 import face_recognition
 from sklearn import svm
+from sklearn import model_selection
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import classification_report
-from utilities.file_utilities import get_unique_filename
+from vidsortml.utilities.file_utilities import get_unique_filename
 import statistics
 import cv2
 import os
+import pathlib
 
+ENCODINGS_ROOT_DIR = pathlib.Path(__file__).parents[1] / 'encodings'
+MODELS_ROOT_DIR = pathlib.Path(__file__).parents[1] / 'models'
 
 def load_object(path):
     try:
@@ -23,9 +27,9 @@ def load_object(path):
 
 def save_object(path, obj):
     try:
-        folder = os.path.split(path)[0]
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+        folder = path.parents[0]
+        if not folder.is_dir():
+            folder.mkdir(parents=True, exist_ok=False)
         with open(path, 'wb+') as f:
             pickle.dump(obj, f)
     except Exception as e:
@@ -34,11 +38,15 @@ def save_object(path, obj):
     return 0
 
 def extract_all_face_encodings(path):
-    train_dir = os.listdir(path)
+    train_dir = pathlib.Path(path)
     # TODO: Ensure that there is nothing but folders in this path...
-    for person_folder in train_dir:
-        if not os.path.exists("./encodings/"+person_folder):
-            extract_face_encodings(path+person_folder)
+    for person_folder in train_dir.iterdir():
+        name = person_folder.stem
+        print(name)
+        person_encoding_dir = pathlib.Path(__file__).parents[1] / 'encodings' / name
+        print(person_encoding_dir)
+        if not person_encoding_dir.is_dir():
+            extract_face_encodings(person_folder)
 
 def extract_face_encodings(path):
     """!
@@ -49,13 +57,13 @@ def extract_face_encodings(path):
 
     encodings = []
 
-    name = os.path.split(path)[1]
+    name = path.stem
     print("Extracting facial features of", name)
-    training_images = os.listdir(path)
-    
-    for image in training_images:
-        print("Analysing:", path + "/" + image)
-        face = face_recognition.load_image_file(path + "/" + image)
+    # training_images = os.listdir(path)
+
+    for image in path.iterdir():
+        print("Analysing:", image)
+        face = face_recognition.load_image_file(image)
         face_bounding_boxes = face_recognition.face_locations(face)
 
         if len(face_bounding_boxes) == 1: # Picture only contains 1 face
@@ -66,7 +74,8 @@ def extract_face_encodings(path):
         else: # Picture cannot contain more than 1 face
             print("WARNING: More than one face is detected, so it cannot be used for training. It is suggested you remove this image from future trainings.")
 
-    save_object("./encodings/"+name, encodings)
+    person_encoding_dir = pathlib.Path(__file__).parents[1] / 'encodings' / name
+    save_object(person_encoding_dir, encodings)
     return 0
 
 def train_model(model_name, names, model_type="mlp"):
@@ -79,7 +88,8 @@ def train_model(model_name, names, model_type="mlp"):
     master_names = []
 
     for name in names:
-        encodings = load_object("./encodings/"+name)
+        person_encoding_dir = pathlib.Path(ENCODINGS_ROOT_DIR / name)
+        encodings = load_object(person_encoding_dir)
         for encoding in encodings:
             master_encodings.append(encoding)
             master_names.append(name)
@@ -145,7 +155,7 @@ def train_model(model_name, names, model_type="mlp"):
     y_true, y_pred = y_test, clf.predict(X_test)
     print(classification_report(y_true, y_pred))
 
-    save_object("./models/"+model_name, clf)
+    save_object(pathlib.Path(MODELS_ROOT_DIR / model_name), clf)
     print("Model", model_name, "has been trained.")
 
 def test_model(model_name, test_image_name):
@@ -155,7 +165,7 @@ def test_model(model_name, test_image_name):
     2. Ensure that the model recognizes that person with a very high confidence
     """
 
-    clf = load_object("./models/"+model_name)
+    clf = load_object(pathlib.Path(model_selection / model_name))
 
     # Load the test image with unknown faces into a numpy array
     test_image = face_recognition.load_image_file(test_image_name)

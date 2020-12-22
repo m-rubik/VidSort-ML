@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from utilities.model_utilities import load_object
+from vidsortml.utilities.model_utilities import load_object
 
 def plot_encodings(names):
     fig, ax = plt.subplots()

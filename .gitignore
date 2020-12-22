@@ -1,19 +1,21 @@
-encodings/*
+src/encodings/*
 videos/*
 images/*
 images_backup/*
 objects/*
-models/*
-databases/*
+src/models/*
+src/databases/*
 .vscode/*
 Other/*
 */__pycache__/*
 *.pyc
+debug.log
 
 Pipfile.lock
+*.egg-info
 
-/configurations/*
+src/configurations/*
 !/configurations/sample
 
-/models/*
+src/models/*
 !/models/sample

@@ -2,10 +2,15 @@ import face_recognition
 import cv2
 import numpy as np
 import os
-from utilities.file_utilities import get_unique_filename
-from utilities.model_utilities import load_object
-from utilities.database_utilities import save_database, load_database
+from vidsortml.utilities.file_utilities import get_unique_filename
+from vidsortml.utilities.model_utilities import load_object
+from vidsortml.utilities.database_utilities import save_database, load_database
 from sklearn.preprocessing import StandardScaler
+import pathlib
+
+ENCODINGS_ROOT_DIR = pathlib.Path(__file__).parent / 'encodings'
+MODELS_ROOT_DIR = pathlib.Path(__file__).parent / 'models'
+IMAGES_ROOT_DIR = pathlib.Path(__file__).parent / 'images'
 
 class videoAnalyser():
 
@@ -24,7 +29,8 @@ class videoAnalyser():
         self.video_face_data = {}
 
         # Load the classifier
-        self.model = load_object("./models/"+self.model_name)
+        print(pathlib.Path(MODELS_ROOT_DIR / self.model_name))
+        self.model = load_object(pathlib.Path(MODELS_ROOT_DIR / self.model_name))
 
         # Load the associated database
         self.db = load_database(self.model_name)
@@ -126,11 +132,12 @@ class videoAnalyser():
         self.save_to_database()
 
     def save_face_to_img(self, face, frame):
-        folder = "./images/"+face+"/"
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        file_name = get_unique_filename("./images/"+face+"/")
-        cv2.imwrite(folder+file_name+".jpg", frame)
+        person_image_folder = pathlib.Path(IMAGES_ROOT_DIR / face)
+        if not person_image_folder.is_dir():
+            person_image_folder.mkdir(parents=True, exist_ok=False)
+        file_name = get_unique_filename(person_image_folder)
+        file_path = pathlib.Path(person_image_folder / file_name).with_suffix(".jpg").resolve()
+        cv2.imwrite(str(file_path), frame)
 
     def print_results(self):
         print("\n============ FINAL RESULTS ============")

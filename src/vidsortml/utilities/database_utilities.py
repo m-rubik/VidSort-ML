@@ -1,6 +1,9 @@
 import pickle
 import pprint
 import os
+import pathlib
+
+DATABASES_ROOT_DIR = pathlib.Path(__file__).parents[1] / 'databases'
 
 class database:
 
@@ -28,7 +31,8 @@ class database:
 
 def load_database(name):
     try:
-        with open("./databases/"+name, 'rb') as f:
+        database_path = pathlib.Path(DATABASES_ROOT_DIR / name)
+        with open(database_path, 'rb') as f:
             db = pickle.load(f)
     except FileNotFoundError:
         db = database(name)
@@ -36,9 +40,10 @@ def load_database(name):
 
 def save_database(db):
     try:
-        if not os.path.exists("./databases/"):
-            os.makedirs("./databases/")
-        with open("./databases/"+db.name, 'wb') as f:
+        if not DATABASES_ROOT_DIR.is_dir():
+            DATABASES_ROOT_DIR.mkdir(parents=True, exist_ok=False)
+        database_path = pathlib.Path(DATABASES_ROOT_DIR / db.name)
+        with open(database_path, 'wb') as f:
             pickle.dump(db, f)
     except Exception as e:
         print(e)
@@ -56,4 +61,7 @@ def unittest():
 
 
 if __name__ == "__main__":
-    unittest()
+    db = load_database("test3")
+    db.display_entries()
+    db.search("Ryan Gosling")
+    db.search(["Ryan Gosling", "Emma Stone"])

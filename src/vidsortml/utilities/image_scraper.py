@@ -6,12 +6,13 @@ https://towardsdatascience.com/image-scraping-with-python-a96feda8af2d
 import requests
 from PIL import Image
 import os
+import pathlib
 import io
 import hashlib
 from selenium import webdriver
 import time
 from webdriver_manager.chrome import ChromeDriverManager
-from utilities.file_utilities import get_unique_filename
+from vidsortml.utilities.file_utilities import get_unique_filename
 import face_recognition
 
 first = True
@@ -116,55 +117,54 @@ def persist_image(folder_path:str,url:str, first:bool):
     else:
         print("WARNING: More than one face is detected in this picture. Skipping.")
 
-def search_and_download(search_term:str,driver_path:str,target_path='./images/training',number_images=5):
+def search_and_download(search_term:str, driver_path:str, target_path, number_images=10):
     # target_folder = os.path.join(target_path,'_'.join(search_term.lower().split(' ')))
-    target_folder = target_path + "/" + search_term
+    target_folder = pathlib.Path(target_path / search_term)
+    if not target_folder.is_dir():
+        target_folder.mkdir(parents=True, exist_ok=False)
 
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
-
-    # with webdriver.Chrome(executable_path=driver_path) as wd:
-    wd = driver_path
-    res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=0.5)
+    res = fetch_image_urls(search_term, number_images, wd=driver_path, sleep_between_interactions=0.5)
     
     first = True
     try:
         for elem in res:
-            persist_image(target_folder,elem, first)
+            persist_image(target_folder, elem, first)
     except Exception as err:
         print(err)
 
 if __name__ == "__main__":
     driver = webdriver.Chrome(ChromeDriverManager().install())
     # names = ["Ariana Grande", "Beyonce", "Chris Pratt", "Dwayne Johnson", "Justin Bieber", "Kim Kardashian", "Kylie Jenner", "Rihanna", "Selena Gomez", "Taylor Swift"]
-    # names = ["Ryan Gosling", "Emma Stone"]
-    names = [
-        "Robert Downey Jr.", 
-        "Chris Evans", 
-        "Chris Hemsworth", 
-        "Mark Ruffalo", 
-        "Scarlett Johansson", 
-        "Jeremy Renner", 
-        "Anthony Mackie", 
-        "Paul Rudd", 
-        "Paul Bettany", 
-        "Elizabeth Olsen", 
-        "Don Cheadle", 
-        "Benedict Cumberbatch", 
-        "Tom Holland", 
-        "Karen Gillan", 
-        "Chris Pratt", 
-        "Chadwick Boseman", 
-        "Vin Diesel", 
-        "Bradley Cooper", 
-        "Zoe Saldana", 
-        "Pom Klementieff", 
-        "Dave Bautista", 
-        "Josh Brolin", 
-        "Tom Hiddleston", 
-        "Benicio Del Toro", 
-        "Peter Dinklage"]
+    names = ["Ryan Gosling", "Emma Stone"]
+    # names = [
+    #     "Robert Downey Jr.", 
+    #     "Chris Evans", 
+    #     "Chris Hemsworth", 
+    #     "Mark Ruffalo", 
+    #     "Scarlett Johansson", 
+    #     "Jeremy Renner", 
+    #     "Anthony Mackie", 
+    #     "Paul Rudd", 
+    #     "Paul Bettany", 
+    #     "Elizabeth Olsen", 
+    #     "Don Cheadle", 
+    #     "Benedict Cumberbatch", 
+    #     "Tom Holland", 
+    #     "Karen Gillan", 
+    #     "Chris Pratt", 
+    #     "Chadwick Boseman", 
+    #     "Vin Diesel", 
+    #     "Bradley Cooper", 
+    #     "Zoe Saldana", 
+    #     "Pom Klementieff", 
+    #     "Dave Bautista", 
+    #     "Josh Brolin", 
+    #     "Tom Hiddleston", 
+    #     "Benicio Del Toro", 
+    #     "Peter Dinklage"]
     for name in names:
-        if not os.path.isdir('./images/training'+"/"+name):
-            search_and_download(name, driver, number_images=100)
+        root_dir = pathlib.Path(__file__).resolve().parents[1]
+        training_dir = pathlib.Path(root_dir/ 'images' / 'training')
+        if not pathlib.Path(training_dir / name).is_dir():
+            search_and_download(search_term=name, driver_path=driver, target_path=training_dir, number_images=10)
     driver.close()
