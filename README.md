@@ -20,16 +20,10 @@ With a trained model, all faces detected within an image will be compared agains
 
 ## Installation
 
-In order to install the *face_recognition* library, ensure that the order of pip install is as follows:
+Make sure that package installation order is cmake -> dlib -> face_recognition.
+Should be **automatically achieved** with the following:
 ```bash
-pipenv install cmake
-pipenv install dlib
-pipenv install face_recognition
-```
-
-Note that this should be **automatically achieved** with the following:
-```bash
-pipenv install --sequential
+pip install -e .
 ```
 
 ## Setup
