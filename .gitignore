@@ -1,10 +1,10 @@
-src/encodings/*
+src/vidsortml/encodings/*
 videos/*
-images/*
+src/vidsortml/images/*
 images_backup/*
 objects/*
-src/models/*
-src/databases/*
+src/vidsortml/models/*
+src/vidsortml/databases/*
 .vscode/*
 Other/*
 */__pycache__/*
@@ -14,8 +14,8 @@ debug.log
 Pipfile.lock
 *.egg-info
 
-src/configurations/*
+src/vidsortml/configurations/*
 !/configurations/sample
 
-src/models/*
+src/vidsortml/models/*
 !/models/sample
